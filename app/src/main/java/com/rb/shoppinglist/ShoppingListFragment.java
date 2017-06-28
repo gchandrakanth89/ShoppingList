@@ -6,7 +6,11 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -24,12 +28,17 @@ import android.view.animation.OvershootInterpolator;
  */
 public class ShoppingListFragment extends Fragment {
 
+    private static final String TAG = ShoppingListFragment.class.getSimpleName();
     private OnFragmentInteractionListener mListener;
     private View optionsLayout;
     private Animation fabOpenAnimation;
     private Animation fabCloseAnimation;
     private boolean isFabMenuOpen;
     private FloatingActionButton fab;
+    private RecyclerView recyclerView;
+    private StaggeredGridLayoutManager layoutManager;
+    private View parentView;
+    private boolean isListView;
 
     public ShoppingListFragment() {
         // Required empty public constructor
@@ -61,17 +70,20 @@ public class ShoppingListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_shopping_list, container, false);
+        parentView = inflater.inflate(R.layout.fragment_shopping_list, container, false);
 
+        init();
+
+        return parentView;
+    }
+
+    private void init() {
         getAnimations();
-        fab = (FloatingActionButton) view.findViewById(R.id.fab);
-        optionsLayout = view.findViewById(R.id.options_layout);
+        fab = (FloatingActionButton) parentView.findViewById(R.id.fab);
+        optionsLayout = parentView.findViewById(R.id.options_layout);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();*/
-
                 if (isFabMenuOpen)
                     collapseFabMenu();
                 else
@@ -79,8 +91,16 @@ public class ShoppingListFragment extends Fragment {
             }
         });
 
+        recyclerView = (RecyclerView) parentView.findViewById(R.id.list);
 
-        return view;
+        layoutManager = new StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL);
+        recyclerView.setLayoutManager(layoutManager);
+
+        ListAdapter listAdapter = new ListAdapter(getContext(), ItemDatabase.getShoppingList());
+        recyclerView.setAdapter(listAdapter);
+        isListView = true;
+
+        setHasOptionsMenu(true);
     }
 
     private void getAnimations() {
@@ -144,5 +164,31 @@ public class ShoppingListFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_grid) {
+            Log.d(TAG, "Grid");
+
+            if (isListView) {
+                layoutManager.setSpanCount(2);
+                item.setIcon(R.drawable.ic_menu_camera);
+                item.setTitle("Show as list");
+                isListView = false;
+            } else {
+                layoutManager.setSpanCount(1);
+                item.setIcon(R.drawable.ic_menu_gallery);
+                item.setTitle("Show as grid");
+                isListView = true;
+            }
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
