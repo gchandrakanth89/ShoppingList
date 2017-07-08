@@ -3,17 +3,25 @@ package com.rb.databaselib;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.rb.pojo.ShoppingList;
+import com.rb.pojo.ShoppingListItem;
+import com.rb.pojoimpl.ShoppingListImpl;
+import com.rb.pojoimpl.ShoppingListItemImpl;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Pervacio on 02-07-2017.
@@ -46,6 +54,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
 
     private static final String SL_ITEMS_TABLE = "shopping_list_items";
+    private static final String SL_ID = "_id";
     private static final String SL_ITEMS_ID = "item_id";
     private static final String SL_LIST_ID = "shopping_list_id";
     private static final String SL_QUANTITY = "quantity";
@@ -93,7 +102,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                 "FOREIGN KEY(" + SHOPPING_LIST_USER_ID + ") REFERENCES " + USER_TABLE_NAME + "(" + USER_ID + ") )";
 
         String shoppingListItemsStmt = "create table " + SL_ITEMS_TABLE + "(" +
-                "_id INTEGER PRIMARY KEY, " +
+                SL_ID + " INTEGER PRIMARY KEY, " +
                 SL_ITEMS_ID + " INTEGER, " +
                 SL_LIST_ID + " INTEGER, " +
                 SL_QUANTITY + " INTEGER, " +
@@ -115,20 +124,17 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     }
 
+
     public void addUser() {
         SQLiteDatabase database = getWritableDatabase();
-
         ContentValues contentValues = new ContentValues();
-
         contentValues.put(USER_ID, 1);
         contentValues.put(USER_USER_ID, "abc123");
         contentValues.put(USER_NAME, "abc");
         contentValues.put(USER_PH_NUM, "123456789");
         contentValues.put(USER_EMAIL_ID, "abc@gmail.com");
-
         long insert = database.insert(USER_TABLE_NAME, null, contentValues);
         Log.d(TAG, "Insert success " + insert);
-
         database.close();
     }
 
@@ -156,6 +162,21 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         return id;
     }
 
+    public List<ShoppingList> getShoppingList() {
+        SQLiteDatabase database = getReadableDatabase();
+        Cursor cursor = database.query(SHOPPING_LIST_TABLE, null, null, null, null, null, null);
+        List<ShoppingList> list = new ArrayList<>(cursor.getCount());
+        while (cursor.moveToNext()) {
+            long id = cursor.getLong(0);
+            String name = cursor.getString(1);
+            long userId = cursor.getLong(2);
+            list.add(new ShoppingListImpl(id, userId, name));
+        }
+        cursor.close();
+        database.close();
+        return list;
+    }
+
     public long addItemToShoppingList(long shoppingListId, long itemId, int quantity, double price, String brand, String comment) {
 
         ContentValues cv = new ContentValues(2);
@@ -169,6 +190,25 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         long id = database.insert(SL_ITEMS_TABLE, null, cv);
         database.close();
         return id;
+    }
+
+    public List<ShoppingListItem> getShoppingListItems(long shoppingListId) {
+        SQLiteDatabase database = getReadableDatabase();
+        Cursor cursor = database.query(SL_ITEMS_TABLE, null, SL_LIST_ID + " = ?", new String[]{shoppingListId + ""}, null, null, null);
+        List<ShoppingListItem> list = new ArrayList<>(cursor.getCount());
+        while (cursor.moveToNext()) {
+            long id = cursor.getLong(0);
+            long itemId = cursor.getLong(1);
+            long listId = cursor.getLong(2);
+            int quantity = cursor.getInt(3);
+            double price = cursor.getDouble(4);
+            String brand = cursor.getString(5);
+            String comments = cursor.getString(6);
+            list.add(new ShoppingListItemImpl(id, itemId, listId, quantity, price, brand, comments));
+        }
+        cursor.close();
+        database.close();
+        return list;
     }
 
     public void exportDB() {
@@ -197,7 +237,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         SharedPreferences sharedPreferences = context.getSharedPreferences("database", Context.MODE_PRIVATE);
         boolean populated = sharedPreferences.getBoolean("populated", false);
 
-        if(populated){
+        if (populated) {
             return;
         }
 
