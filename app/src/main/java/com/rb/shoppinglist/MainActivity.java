@@ -8,9 +8,10 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.rb.databaselib.ShoppingDatabase;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -38,6 +39,12 @@ public class MainActivity extends AppCompatActivity
             fragmentTransaction.add(R.id.fragment_content, ShoppingListFragment.newInstance());
             fragmentTransaction.commit();
         }
+
+        ShoppingDatabase shoppingDatabase = new ShoppingDatabase(this);
+        shoppingDatabase.populateDummyData();
+        shoppingDatabase.exportDB();
+
+
     }
 
     @Override
