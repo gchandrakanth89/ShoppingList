@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity
         shoppingDatabase.populateDummyData();
         shoppingDatabase.exportDB();
 
+        shoppingDatabase.getShoppingListItems(1);
+
 
     }
 

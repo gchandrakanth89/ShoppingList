@@ -1,5 +1,6 @@
 package com.rb.pojoimpl;
 
+import com.rb.pojo.Item;
 import com.rb.pojo.ShoppingListItem;
 
 /**
@@ -8,7 +9,7 @@ import com.rb.pojo.ShoppingListItem;
 
 public class ShoppingListItemImpl implements ShoppingListItem {
     private long id;
-    private long itemId;
+    private Item item;
     private long shoppingListId;
     private int quantity;
     private double price;
@@ -16,9 +17,9 @@ public class ShoppingListItemImpl implements ShoppingListItem {
     private String comments;
 
 
-    public ShoppingListItemImpl(long id, long itemId, long shoppingListId, int quantity, double price, String brand, String comments) {
+    public ShoppingListItemImpl(long id, Item item, long shoppingListId, int quantity, double price, String brand, String comments) {
         this.id = id;
-        this.itemId = itemId;
+        this.item = item;
         this.shoppingListId = shoppingListId;
         this.quantity = quantity;
         this.price = price;
@@ -32,8 +33,8 @@ public class ShoppingListItemImpl implements ShoppingListItem {
     }
 
     @Override
-    public long getItemId() {
-        return itemId;
+    public Item getItem() {
+        return item;
     }
 
     @Override

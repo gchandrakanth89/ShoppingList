@@ -6,7 +6,7 @@ package com.rb.pojo;
 
 public interface Item {
 
-    public int getId();
+    public long getId();
 
     public String getName();
 
@@ -17,6 +17,8 @@ public interface Item {
     public String getBrand();
 
     public int getQuantity();
+
+    public long getUserId();
 
 
 }

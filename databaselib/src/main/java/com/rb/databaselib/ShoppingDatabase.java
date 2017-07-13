@@ -10,8 +10,10 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.rb.pojo.Item;
 import com.rb.pojo.ShoppingList;
 import com.rb.pojo.ShoppingListItem;
+import com.rb.pojoimpl.ItemImpl;
 import com.rb.pojoimpl.ShoppingListImpl;
 import com.rb.pojoimpl.ShoppingListItemImpl;
 
@@ -53,7 +55,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String SHOPPING_LIST_USER_ID = "user_id";
 
 
-    private static final String SL_ITEMS_TABLE = "shopping_list_items";
+    private static final String SL_ITEMS_TABLE = "SHOPPING_LIST_ITEMS";
     private static final String SL_ID = "_id";
     private static final String SL_ITEMS_ID = "item_id";
     private static final String SL_LIST_ID = "shopping_list_id";
@@ -78,39 +80,14 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         Log.d(TAG, "onCreate");
-        String userTableStmt = "create table " + USER_TABLE_NAME + "(" +
-                USER_ID + " INTEGER PRIMARY KEY, " +
-                USER_USER_ID + " TEXT, " +
-                USER_NAME + " TEXT, " +
-                USER_PH_NUM + " TEXT, " +
-                USER_EMAIL_ID + " TEXT)";
+        String userTableStmt = "create table " + USER_TABLE_NAME + "(" + USER_ID + " INTEGER PRIMARY KEY, " + USER_USER_ID + " TEXT, " + USER_NAME + " TEXT, " + USER_PH_NUM + " TEXT, " + USER_EMAIL_ID + " TEXT)";
 
 
-        String itemTableStmt = "create table " + ITEM_TABLE_NAME + "(" +
-                ITEM_ID + " INTEGER PRIMARY KEY, " +
-                ITEM_NAME + " TEXT, " +
-                ITEM_IMAGE_URL + " TEXT, " +
-                ITEM_PRICE + " NUMBER, " +
-                ITEM_BRAND + " TEXT, " +
-                ITEM_QUANTITY + " NUMBER, " + ITEM_USER_ID + " INTEGER," +
-                " FOREIGN KEY(" + ITEM_USER_ID + ") REFERENCES " + USER_TABLE_NAME + "(" + USER_ID + "))";
+        String itemTableStmt = "create table " + ITEM_TABLE_NAME + "(" + ITEM_ID + " INTEGER PRIMARY KEY, " + ITEM_NAME + " TEXT, " + ITEM_IMAGE_URL + " TEXT, " + ITEM_PRICE + " NUMBER, " + ITEM_BRAND + " TEXT, " + ITEM_QUANTITY + " NUMBER, " + ITEM_USER_ID + " INTEGER," + " FOREIGN KEY(" + ITEM_USER_ID + ") REFERENCES " + USER_TABLE_NAME + "(" + USER_ID + "))";
 
-        String shoppingListStmt = "create table " + SHOPPING_LIST_TABLE + "(" +
-                SHOPPING_LIST_ID + " INTEGER PRIMARY KEY, " +
-                SHOPPING_LIST_NAME + " TEXT, " +
-                SHOPPING_LIST_USER_ID + " INTEGER, " +
-                "FOREIGN KEY(" + SHOPPING_LIST_USER_ID + ") REFERENCES " + USER_TABLE_NAME + "(" + USER_ID + ") )";
+        String shoppingListStmt = "create table " + SHOPPING_LIST_TABLE + "(" + SHOPPING_LIST_ID + " INTEGER PRIMARY KEY, " + SHOPPING_LIST_NAME + " TEXT, " + SHOPPING_LIST_USER_ID + " INTEGER, " + "FOREIGN KEY(" + SHOPPING_LIST_USER_ID + ") REFERENCES " + USER_TABLE_NAME + "(" + USER_ID + ") )";
 
-        String shoppingListItemsStmt = "create table " + SL_ITEMS_TABLE + "(" +
-                SL_ID + " INTEGER PRIMARY KEY, " +
-                SL_ITEMS_ID + " INTEGER, " +
-                SL_LIST_ID + " INTEGER, " +
-                SL_QUANTITY + " INTEGER, " +
-                SL_PRICE + " INTEGER, " +
-                SL_BRAND + " TEXT, " +
-                SL_COMMENTS + " TEXT, " +
-                "FOREIGN KEY(" + SL_ITEMS_ID + ") REFERENCES " + ITEM_TABLE_NAME + "(" + ITEM_ID + "), " +
-                "FOREIGN KEY(" + SL_LIST_ID + ") REFERENCES " + SHOPPING_LIST_TABLE + "(" + SHOPPING_LIST_ID + "))";
+        String shoppingListItemsStmt = "create table " + SL_ITEMS_TABLE + "(" + SL_ID + " INTEGER PRIMARY KEY, " + SL_ITEMS_ID + " INTEGER, " + SL_LIST_ID + " INTEGER, " + SL_QUANTITY + " INTEGER, " + SL_PRICE + " INTEGER, " + SL_BRAND + " TEXT, " + SL_COMMENTS + " TEXT, " + "FOREIGN KEY(" + SL_ITEMS_ID + ") REFERENCES " + ITEM_TABLE_NAME + "(" + ITEM_ID + "), " + "FOREIGN KEY(" + SL_LIST_ID + ") REFERENCES " + SHOPPING_LIST_TABLE + "(" + SHOPPING_LIST_ID + "))";
 
         db.execSQL(userTableStmt);
         db.execSQL(itemTableStmt);
@@ -177,6 +154,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         return list;
     }
 
+
     public long addItemToShoppingList(long shoppingListId, long itemId, int quantity, double price, String brand, String comment) {
 
         ContentValues cv = new ContentValues(2);
@@ -194,21 +172,56 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     public List<ShoppingListItem> getShoppingListItems(long shoppingListId) {
         SQLiteDatabase database = getReadableDatabase();
-        Cursor cursor = database.query(SL_ITEMS_TABLE, null, SL_LIST_ID + " = ?", new String[]{shoppingListId + ""}, null, null, null);
+        //SELECT * FROM SHOPPING_LIST_TABLE, SHOPPING_LIST_ITEMS, ITEM_TABLE where SHOPPING_LIST_TABLE._id = 2 AND
+        // SHOPPING_LIST_TABLE._id = SHOPPING_LIST_ITEMS.shopping_list_id  AND SHOPPING_LIST_ITEMS.item_id = ITEM_TABLE._id;
+        String query = "SELECT * FROM " + SHOPPING_LIST_TABLE + ", "
+                + SL_ITEMS_TABLE + ", "
+                + ITEM_TABLE_NAME + " "
+                + "where " + SHOPPING_LIST_TABLE + "." + SHOPPING_LIST_ID + " = " + shoppingListId + " AND "
+                + SHOPPING_LIST_TABLE + "." + SHOPPING_LIST_ID + " = " + SL_ITEMS_TABLE + "." + SL_LIST_ID + "  AND "
+                + SL_ITEMS_TABLE + "." + SL_ITEMS_ID + " = " + ITEM_TABLE_NAME + "." + ITEM_ID + ";";
+        Cursor cursor = database.rawQuery(query, null);
+        Log.d(TAG, "Chandu " + cursor.getCount() + "-->" + cursor.getColumnCount());
         List<ShoppingListItem> list = new ArrayList<>(cursor.getCount());
         while (cursor.moveToNext()) {
-            long id = cursor.getLong(0);
-            long itemId = cursor.getLong(1);
-            long listId = cursor.getLong(2);
-            int quantity = cursor.getInt(3);
-            double price = cursor.getDouble(4);
-            String brand = cursor.getString(5);
-            String comments = cursor.getString(6);
-            list.add(new ShoppingListItemImpl(id, itemId, listId, quantity, price, brand, comments));
+            long id = cursor.getLong(3);
+            long itemId = cursor.getLong(4);
+            long listId = cursor.getLong(5);
+            int quantity = cursor.getInt(6);
+            double price = cursor.getDouble(7);
+            String brand = cursor.getString(8);
+            String comments = cursor.getString(9);
+
+            String itemName = cursor.getString(11);
+            String itemImageUrl = cursor.getString(12);
+            double itemPrice = cursor.getDouble(13);
+            String itemBrand = cursor.getString(14);
+            int itemQuantity = cursor.getInt(15);
+            long itemUserId = cursor.getLong(16);
+
+            Item item = new ItemImpl(itemId, itemName, itemImageUrl, itemPrice, itemBrand, itemQuantity, itemUserId);
+            list.add(new ShoppingListItemImpl(id, item, listId, quantity, price, brand, comments));
+
         }
         cursor.close();
         database.close();
         return list;
+    }
+
+    private Item getItem(SQLiteDatabase database, long itemId) {
+
+        Cursor cursor = database.query(ITEM_TABLE_NAME, null, ITEM_ID + " = ?", new String[]{itemId + ""}, null, null, null);
+        cursor.moveToNext();
+        long id = cursor.getLong(0);
+        String name = cursor.getString(1);
+        String url = cursor.getString(2);
+        double price = cursor.getDouble(3);
+        String brand = cursor.getString(4);
+        int quantity = cursor.getInt(5);
+        long userId = cursor.getLong(6);
+        Item item = new ItemImpl(id, name, url, price, brand, quantity, userId);
+        cursor.close();
+        return item;
     }
 
     public void exportDB() {
@@ -257,11 +270,11 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         long shoppingList1 = createShoppingList("Main shopping list", 1);
         long shoppingList2 = createShoppingList("Sub shopping list", 1);
 
+        addItemToShoppingList(shoppingList2, item4, 10, 20.25, "Santoor", "abcd");
         addItemToShoppingList(shoppingList1, item1, 10, 20.25, "Santoor", "abcd");
         addItemToShoppingList(shoppingList1, item2, 10, 20.25, "Santoor", "abcd");
         addItemToShoppingList(shoppingList1, item3, 10, 20.25, "Santoor", "abcd");
-        addItemToShoppingList(shoppingList2, item4, 10, 20.25, "Santoor", "abcd");
-        addItemToShoppingList(shoppingList2, item5, 10, 20.25, "Santoor", "abcd");
+        addItemToShoppingList(shoppingList2, item1, 10, 20.25, "Santoor", "abcd");
 
     }
 

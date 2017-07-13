@@ -7,7 +7,7 @@ package com.rb.pojo;
 public interface ShoppingListItem {
     long getId();
 
-    long getItemId();
+    Item getItem();
 
     long getShoppingListId();
 

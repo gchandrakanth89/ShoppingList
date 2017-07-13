@@ -8,15 +8,26 @@ import com.rb.pojo.Item;
  */
 
 public class ItemImpl implements Item {
-    private int id;
+    private long id;
     private String name;
     private String imageUrl;
     private double price;
     private String brand;
     private int quantity;
+    private long userId;
+
+    public ItemImpl(long id, String name, String imageUrl, double price, String brand, int quantity, long userId) {
+        this.id = id;
+        this.name = name;
+        this.imageUrl = imageUrl;
+        this.price = price;
+        this.brand = brand;
+        this.quantity = quantity;
+        this.userId = userId;
+    }
 
     @Override
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -43,5 +54,10 @@ public class ItemImpl implements Item {
     @Override
     public int getQuantity() {
         return quantity;
+    }
+
+    @Override
+    public long getUserId() {
+        return userId;
     }
 }
